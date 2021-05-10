@@ -17,46 +17,45 @@ const char PERIOD_MESSAGES[3][128] = {
     "You have a longer break now!"
 };
 
-void notify() {
-    printf("%s\n", PERIOD_MESSAGES[period]);
-
+void notify () {
     char command[128];
-    strcpy(command, "notify-send \"");
-    strcat(command, PERIOD_MESSAGES[period]);
-    strcat(command, "\"");
-    system(command);
+    strcpy (command, "notify-send --urgency=critical \"Pomodoro\" \"");
+    strcat (command, PERIOD_MESSAGES[period]);
+    strcat (command, "\"");
+    system (command);
 }
 
-int main(int argc, char *argv[]) {
+int main (int argc, char *argv[]) {
     time_t start_time, current_time;
     double elapsed_time;
 
     int step = 1;
     period = work;
-    start_time = time(NULL);
-    notify();
+    start_time = time (NULL);
+    notify ();
 
-    while(1) {
-        current_time = time(NULL);
-        elapsed_time = difftime(current_time, start_time);
+    while (1) {
+        current_time = time (NULL);
+        elapsed_time = difftime (current_time, start_time);
 
-        if(elapsed_time >= PERIOD_TIMES[period] * 60) {
-            start_time = time(NULL);
+        if (elapsed_time >= PERIOD_TIMES[period] * 60) {
+            start_time = time (NULL);
 
             step++;
-            if(step % 2 == 1) {
+            if (step % 2 == 1) {
                 period = work;
-            } else if(step % (CICLE * 2) == 0) {
+            } else if (step % (CICLE * 2) == 0) {
                 period = long_break;
             } else {
                 period = short_break;
             }
 
-            notify();
+            notify ();
         }
 
-        sleep(60); // sleeps 1 minute
+        sleep (60); // sleeps 1 minute
     }
 
     return 0;
 }
+
