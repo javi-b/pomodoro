@@ -1,2 +1,2 @@
 # pomodoro
-Simple terminal pomodoro timer
+Simple terminal pomodoro timer for Linux.
