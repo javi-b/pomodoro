@@ -4,6 +4,11 @@
 #include <unistd.h>
 #include <string.h>
 
+#define STR_LEN 128
+
+#define NOTIFICATION_SOUND "notification.mp3"
+#define NOTIFICATION_URGENCY "critical" // Can be: low / normal / critical
+
 #define CICLE 4
 #define WORK_TIME 25
 #define SHORT_BREAK_TIME 5
@@ -11,18 +16,44 @@
 
 enum period{work, short_break, long_break} period;
 const int PERIOD_TIMES[3] = {WORK_TIME, SHORT_BREAK_TIME, LONG_BREAK_TIME};
-const char PERIOD_MESSAGES[3][128] = {
+const char PERIOD_MESSAGES[3][STR_LEN] = {
     "Time to work, you can do this!",
     "Enjoy a short break :)",
     "You have a longer break now!"
 };
 
+int command_exists (char command[STR_LEN]) {
+    char which_command[STR_LEN];
+    strcpy (which_command, "which ");
+    strcat (which_command, command);
+    strcat (which_command, " > /dev/null 2>&1");
+    if (system (which_command)) {
+        fprintf (stderr, "Command '%s' not found.", command);
+        return 0;
+    }
+    return 1;
+}
+
 void notify () {
-    char command[128];
-    strcpy (command, "notify-send --urgency=critical \"Pomodoro\" \"");
-    strcat (command, PERIOD_MESSAGES[period]);
-    strcat (command, "\"");
-    system (command);
+    char command[STR_LEN];
+
+    // System notification using 'notify-send'
+    if (command_exists ("notify-send")) {
+        strcpy (command, "notify-send --urgency=");
+        strcat (command, NOTIFICATION_URGENCY);
+        strcat (command, " \"Pomodoro\" \"");
+        strcat (command, PERIOD_MESSAGES[period]);
+        strcat (command, "\"");
+        system (command);
+    }
+
+    // Sound using 'mpv'
+    if (command_exists ("mpv")) {
+        strcpy (command, "mpv --vo=null --really-quiet --loop-playlist=1 \
+                --loop=0 ");
+        strcat (command, NOTIFICATION_SOUND);
+        system (command);
+    }
 }
 
 int main (int argc, char *argv[]) {
