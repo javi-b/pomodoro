@@ -6,7 +6,7 @@
 
 #define STR_LEN 128
 
-#define NOTIFICATION_SOUND "notification.mp3"
+#define NOTIFICATION_SOUND "/usr/share/pomodoro/notification.mp3"
 #define NOTIFICATION_URGENCY "critical" // Can be: low / normal / critical
 
 #define CICLE 4
