@@ -1,12 +1,18 @@
 # pomodoro
 Simple Pomodoro Timer for GNU+Linux using sound and text notifications. 
 
-## Installation
+## Install
 ```
 user $ git clone https://github.com/javi-b/pomodoro.git
 user $ cd pomodoro
 user $ make
 root # make install 
+```
+
+## Uninstall
+```
+root # make uninstall
+user $ rm -rf pomodoro
 ```
 
 ## Usage
@@ -19,7 +25,7 @@ Work | Short break | Long break
 ---- | ----------- | ----------
 25 min. | 5 min. | 30 min.
 
-## Configuration
+## Configure
 You can change the periods duration and the notifications sound and messages by changing constants in the source code. After that, recompile and reinstall the programm:
 ```
 user $ make
