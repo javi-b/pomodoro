@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-Wall
 
 ifeq ($(PREFIX),)
-	PREFIX := /usr/
+	PREFIX := /usr
 endif
 
 pomodoro : pomodoro.c
