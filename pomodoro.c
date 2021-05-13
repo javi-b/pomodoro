@@ -41,7 +41,7 @@ void notify () {
     if (command_exists ("notify-send")) {
         strcpy (command, "notify-send --urgency=");
         strcat (command, NOTIFICATION_URGENCY);
-        strcat (command, " \"Pomodoro\" \"");
+        strcat (command, " -a \"Pomodoro\" \"Pomodoro\" \"");
         strcat (command, PERIOD_MESSAGES[period]);
         strcat (command, "\"");
         system (command);
