@@ -5,28 +5,42 @@
 #include <unistd.h>
 #include <getopt.h>
 
-/**
- * Constants and global variables
- */
-#define STR_LEN 128
+// Text formatting constants
+#define RESET "\033[0m"
+#define BOLD "\033[1m"
+
+#define STR_LEN 128 // Default length for strings
+
+// Help command string
+#define HELP_STRING \
+    "Usage: pomodoro [OPTION...]\n\n" \
+    "  -h, --help          display this help and exit\n\n" \
+    "  -v, --verbose       print notifications to stdout\n" \
+    "      --no-sound      no sound notifications\n" \
+    "      --no-desktop    no desktop notifications\n\n" \
+    "  -w, --work=MIN      set Work period time to MIN " \
+            "(default 25)\n" \
+    "  -s, --short=MIN     set Short Break period time to MIN " \
+            "(default 5)\n" \
+    "  -l, --long=MIN      set Long Break period time to MIN " \
+            "(default 30)\n"
 
 #define NOTIFICATION_SOUND "/usr/share/pomodoro/notification.mp3"
 #define NOTIFICATION_URGENCY "critical" // Can be: low / normal / critical
 
-#define HELP_STRING \
-    "Usage: pomodoro [OPTION...]\n" \
-    "  -h, --help          display this help and exit\n" \
-    "  -v, --verbose       print the notifications to stdout\n" \
-    "      --no-sound      no sound notifications\n" \
-    "      --no-desktop    no desktop notifications\n"
+#define CICLE 4 // Amount of work periods until long break
+#define WORK_TIME 25 // Default work period time
+#define SHORT_BREAK_TIME 5 // Default short break period time
+#define LONG_BREAK_TIME 30 // Default long break period time
 
-#define CICLE 4
-#define WORK_TIME 25
-#define SHORT_BREAK_TIME 5
-#define LONG_BREAK_TIME 30
+enum period{work, short_break, long_break};
 
-enum period{work, short_break, long_break} period;
-const int PERIOD_TIMES[3] = {WORK_TIME, SHORT_BREAK_TIME, LONG_BREAK_TIME};
+int PERIOD_TIMES[3] = {WORK_TIME, SHORT_BREAK_TIME, LONG_BREAK_TIME};
+const char PERIOD_NAMES[3][STR_LEN] = {
+    "Work period",
+    "Short Break period",
+    "Long Break period"
+};
 const char PERIOD_MESSAGES[3][STR_LEN] = {
     "Time to work, you can do this!",
     "Enjoy a short break :)",
@@ -37,7 +51,24 @@ const char PERIOD_MESSAGES[3][STR_LEN] = {
 int exit_flag, help_flag, verbose_flag, no_sound_flag, no_desktop_flag;
 
 /**
- * Functions
+ * Sets the time for 'period' to the number in 'str' if possible. If not,
+ * keeps the previous time.
+ */
+void set_period_time (int period, const char *str) {
+    int time = (int) strtol (str, NULL, 10);
+    if (time > 0) {
+        PERIOD_TIMES[period] = time;
+        printf ("%s time set to %d min.\n",
+                PERIOD_NAMES[period], PERIOD_TIMES[period]);
+    } else {
+        fprintf (stderr, "'%s' min is not a valid period time.\n", str);
+        fprintf (stderr, "%s time is still %d min.\n",
+                PERIOD_NAMES[period], PERIOD_TIMES[period]);
+    }
+}
+
+/**
+ * Parses the command options and make the necessary changes accordingly.
  */
 void parse_options (int argc, char *argv[]) {
     static struct option long_options[] = {
@@ -45,6 +76,9 @@ void parse_options (int argc, char *argv[]) {
         {"verbose", no_argument, 0, 'v'},
         {"no-sound", no_argument, &no_sound_flag, 1},
         {"no-desktop", no_argument, &no_desktop_flag, 1},
+        {"work", required_argument, 0, 'w'},
+        {"short-break", required_argument, 0, 's'},
+        {"long-break", required_argument, 0, 'l'},
         {0, 0, 0, 0} // To terminate array
     };
 
@@ -52,7 +86,8 @@ void parse_options (int argc, char *argv[]) {
     int c; // Option character code
 
     while (1) {
-        c = getopt_long (argc, argv, "hv", long_options, &option_index);
+        c = getopt_long (argc, argv, "hvw:s:l:", long_options,
+                &option_index);
 
         if (c == -1) {
             // If no more options...
@@ -68,6 +103,15 @@ void parse_options (int argc, char *argv[]) {
                 break;
             case 'v':
                 verbose_flag = 1;
+                break;
+            case 'w':
+                set_period_time (work, optarg);
+                break;
+            case 's':
+                set_period_time (short_break, optarg);
+                break;
+            case 'l':
+                set_period_time (long_break, optarg);
                 break;
             case '?':
                 // If an unknown option or an option with a missing
@@ -85,11 +129,14 @@ void parse_options (int argc, char *argv[]) {
     }
 }
 
+/**
+ * Returns boolean value depending if 'command' exists in the user's
+ * system.
+ */
 int command_exists (char command[STR_LEN]) {
-    char which_command[STR_LEN];
-    strcpy (which_command, "which ");
-    strcat (which_command, command);
-    strcat (which_command, " > /dev/null 2>&1");
+    char which_command[STR_LEN * 2];
+    snprintf (which_command, STR_LEN * 2, "which %s > /dev/null 2>&1",
+            command);
     if (system (which_command)) {
         fprintf (stderr, "Command '%s' not found.", command);
         return 0;
@@ -97,21 +144,29 @@ int command_exists (char command[STR_LEN]) {
     return 1;
 }
 
-void notify () {
+/**
+ * Notifies the user about the change of the Pomodoro period. It can notify
+ * in different ways depending on the options set.
+ */
+void notify (int period) {
+    char title[STR_LEN * 2];
+    snprintf (title, STR_LEN * 2, "%s of %d min",
+            PERIOD_NAMES[period], PERIOD_TIMES[period]);
+    char body[STR_LEN];
+    strcpy (body, PERIOD_MESSAGES[period]);
+
     if (verbose_flag) {
-        printf(PERIOD_MESSAGES[period]);
-        printf("\n");
+        // Output to stdout
+        printf ("\n" BOLD "  %s\n" RESET "  %s\n\n", title, body);
     }
 
     if (! no_desktop_flag) {
         // System notification using 'notify-send'
         if (command_exists ("notify-send")) {
-            char command[STR_LEN];
-            strcpy (command, "notify-send --urgency=");
-            strcat (command, NOTIFICATION_URGENCY);
-            strcat (command, " -a \"Pomodoro\" \"Pomodoro\" \"");
-            strcat (command, PERIOD_MESSAGES[period]);
-            strcat (command, "\"");
+            char command[STR_LEN * 4];
+            snprintf (command, STR_LEN * 4,
+                    "notify-send --urgency=%s -a Pomodoro \"%s\" \"%s\"",
+                    NOTIFICATION_URGENCY, title, body);
             system (command);
         }
     }
@@ -119,17 +174,17 @@ void notify () {
     if (! no_sound_flag) {
         // Sound using 'mpv'
         if (command_exists ("mpv")) {
-            char command[STR_LEN];
-            strcpy (command, "mpv --vo=null --really-quiet \
-                    --loop-playlist=1 --loop=0 ");
-            strcat (command, NOTIFICATION_SOUND);
+            char command[STR_LEN * 2];
+            snprintf (command, STR_LEN * 2, "mpv -vo=null --really-quiet \
+                    --loop-playlist=1 --loop=0 %s", NOTIFICATION_SOUND);
             system (command);
         }
     }
 }
 
 /**
- * Main
+ * Main.
+ * Loops through the Pomodoro periods and notifies the user accordingly.
  */
 int main (int argc, char *argv[]) {
     parse_options (argc, argv);
@@ -148,9 +203,9 @@ int main (int argc, char *argv[]) {
     double elapsed_time;
 
     int step = 1;
-    period = work;
+    int period = work;
     start_time = time (NULL);
-    notify ();
+    notify (period);
 
     while (1) {
         current_time = time (NULL);
@@ -168,7 +223,7 @@ int main (int argc, char *argv[]) {
                 period = short_break;
             }
 
-            notify ();
+            notify (period);
         }
 
         sleep (60); // sleeps 1 minute
