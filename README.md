@@ -32,7 +32,7 @@ user $ pomodoro --no-sound --long=20 & diswon
 ```
 Run pomodoro with notifications in the terminal instead of in the desktop:
 ```
-user $ pomodoro --verbose --no-desktop
+user $ pomodoro --stdout --no-desktop
 ```
 
 ## Dependencies
