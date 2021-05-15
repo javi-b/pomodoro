@@ -14,8 +14,9 @@
 // Help command string
 #define HELP_STRING \
     "Usage: pomodoro [OPTION...]\n\n" \
-    "  -h, --help          display this help and exit\n\n" \
-    "  -v, --verbose       print notifications to stdout\n" \
+    "  -h, --help          display this help and exit\n" \
+    "  -v, --verbose       print info about intial configuration\n\n" \
+    "      --stdout        print notifications to stdout\n" \
     "      --no-sound      no sound notifications\n" \
     "      --no-desktop    no desktop notifications\n\n" \
     "  -w, --work=MIN      set Work period time to MIN " \
@@ -48,7 +49,8 @@ const char PERIOD_MESSAGES[3][STR_LEN] = {
 };
 
 // Flags
-int exit_flag, help_flag, verbose_flag, no_sound_flag, no_desktop_flag;
+int exit_flag, help_flag, verbose_flag, stdout_flag, no_sound_flag,
+        no_desktop_flag;
 
 /**
  * Sets the time for 'period' to the number in 'str' if possible. If not,
@@ -58,12 +60,8 @@ void set_period_time (int period, const char *str) {
     int time = (int) strtol (str, NULL, 10);
     if (time > 0) {
         PERIOD_TIMES[period] = time;
-        printf ("%s time set to %d min.\n",
-                PERIOD_NAMES[period], PERIOD_TIMES[period]);
     } else {
         fprintf (stderr, "'%s' min is not a valid period time.\n", str);
-        fprintf (stderr, "%s time is still %d min.\n",
-                PERIOD_NAMES[period], PERIOD_TIMES[period]);
     }
 }
 
@@ -74,6 +72,7 @@ void parse_options (int argc, char *argv[]) {
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
         {"verbose", no_argument, 0, 'v'},
+        {"stdout", no_argument, &stdout_flag, 1},
         {"no-sound", no_argument, &no_sound_flag, 1},
         {"no-desktop", no_argument, &no_desktop_flag, 1},
         {"work", required_argument, 0, 'w'},
@@ -155,7 +154,7 @@ void notify (int period) {
     char body[STR_LEN];
     strcpy (body, PERIOD_MESSAGES[period]);
 
-    if (verbose_flag) {
+    if (stdout_flag) {
         // Output to stdout
         printf ("\n" BOLD "  %s\n" RESET "  %s\n\n", title, body);
     }
@@ -197,6 +196,16 @@ int main (int argc, char *argv[]) {
     if (help_flag) {
         printf (HELP_STRING);
         return 0;
+    }
+
+    if (verbose_flag) {
+        printf ("Pomodoro Timer started with:\n"
+                "  %ss of " BOLD "%d" RESET " min\n"
+                "  %ss of " BOLD "%d" RESET " min\n"
+                "  %ss of " BOLD "%d" RESET " min\n",
+                PERIOD_NAMES[work], PERIOD_TIMES[work],
+                PERIOD_NAMES[short_break], PERIOD_TIMES[short_break],
+                PERIOD_NAMES[long_break], PERIOD_TIMES[long_break]);
     }
 
     time_t start_time, current_time;
