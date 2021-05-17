@@ -129,15 +129,14 @@ void parse_options (int argc, char *argv[]) {
 }
 
 /**
- * Returns boolean value depending if 'command' exists in the user's
+ * Returns boolean value depending if 'cmd' exists in the user's
  * system.
  */
-int command_exists (char command[STR_LEN]) {
-    char which_command[STR_LEN * 2];
-    snprintf (which_command, STR_LEN * 2, "which %s > /dev/null 2>&1",
-            command);
-    if (system (which_command)) {
-        fprintf (stderr, "Command '%s' not found.", command);
+int cmd_exists (char cmd[STR_LEN]) {
+    char which_cmd[STR_LEN * 2];
+    snprintf (which_cmd, STR_LEN * 2, "which %s > /dev/null 2>&1", cmd);
+    if (system (which_cmd)) {
+        fprintf (stderr, "Command '%s' not found.\n", cmd);
         return 0;
     }
     return 1;
@@ -161,22 +160,22 @@ void notify (int period) {
 
     if (! no_desktop_flag) {
         // System notification using 'notify-send'
-        if (command_exists ("notify-send")) {
-            char command[STR_LEN * 4];
-            snprintf (command, STR_LEN * 4,
+        if (cmd_exists ("notify-send")) {
+            char cmd[STR_LEN * 4];
+            snprintf (cmd, STR_LEN * 4,
                     "notify-send --urgency=%s -a Pomodoro \"%s\" \"%s\"",
                     NOTIFICATION_URGENCY, title, body);
-            system (command);
+            system (cmd);
         }
     }
 
     if (! no_sound_flag) {
         // Sound using 'mpv'
-        if (command_exists ("mpv")) {
-            char command[STR_LEN * 2];
-            snprintf (command, STR_LEN * 2, "mpv -vo=null --really-quiet \
+        if (cmd_exists ("mpv")) {
+            char cmd[STR_LEN * 2];
+            snprintf (cmd, STR_LEN * 2, "mpv -vo=null --really-quiet \
                     --loop-playlist=1 --loop=0 %s", NOTIFICATION_SOUND);
-            system (command);
+            system (cmd);
         }
     }
 }
