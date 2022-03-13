@@ -15,7 +15,7 @@
 #define HELP_STRING \
     "Usage: pomodoro [OPTION...]\n\n" \
     "  -h, --help          display this help and exit\n" \
-    "  -v, --verbose       print info about intial configuration\n\n" \
+    "  -v, --verbose       print info about initial configuration\n\n" \
     "      --stdout        print notifications to stdout\n" \
     "      --no-sound      no sound notifications\n" \
     "      --no-desktop    no desktop notifications\n\n" \
